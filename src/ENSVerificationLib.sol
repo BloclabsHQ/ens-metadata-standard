@@ -36,13 +36,15 @@ library ENSVerificationLib {
 
         // Get the resolver address for the given node (ENS name)
         address resolverAddress = ens.resolver(node);
+        // console.log("Resolver Address:", resolverAddress);
 
         // Cast the resolver address to the IENSResolver interface
         IENSResolver resolver = IENSResolver(resolverAddress);
 
         // Get the address associated with the ENS name from the resolver
         address resolvedAddress = resolver.addr(node);
-
+        // console.log("Resolved Address:", resolvedAddress);
+        // console.log("Expected Contract Address:", contractAddress);
         // Verify that the resolved address matches the expected contract address
         return resolvedAddress == contractAddress;
     }

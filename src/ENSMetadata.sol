@@ -16,10 +16,18 @@ It uses the MetadataLib and ENSVerificationLib to handle the logic for managing 
 /// @dev Uses the ENSVerificationLib library to verify the ENS name.
 contract ENSMetadata {
     using MetadataLib for MetadataLib.Metadata;
+    using ENSVerificationLib for address;
 
     MetadataLib.Metadata public metadata;
     address public owner;
     address public ensRegistry; // Declare ensRegistry as a state variable
+
+    event MetadataUpdated(
+        string title,
+        string description,
+        string ENS_name,
+        bool verification
+    );
 
     constructor(
         string memory _title,
@@ -44,12 +52,25 @@ contract ENSMetadata {
     ) public onlyOwner {
         metadata.setMetadata(_title, _description, _ENS_name);
 
-        // Verify the ENS name and update the verification status in the metadata
-        bytes32 node = ENSVerificationLib.getENSNode(_ENS_name);
-        metadata.verification = ENSVerificationLib.verifyENS(
-            ensRegistry,
-            node,
-            address(this)
+        emit MetadataUpdated(
+            _title,
+            _description,
+            _ENS_name,
+            metadata.verification // Emit the event with the current verification status
+        );
+    }
+
+    function verifyENS() public onlyOwner {
+        bytes32 node = ENSVerificationLib.getENSNode(metadata.ENS_name);
+        bool isVerified = ensRegistry.verifyENS(node, address(this)); // Reusing verifyENS from ENSVerificationLib
+
+        metadata.verification = isVerified;
+
+        emit MetadataUpdated(
+            metadata.title,
+            metadata.description,
+            metadata.ENS_name,
+            metadata.verification // Emit the event with the new verification status
         );
     }
 
