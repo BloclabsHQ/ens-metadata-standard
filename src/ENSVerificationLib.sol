@@ -32,34 +32,31 @@ library ENSVerificationLib {
     /// @param ensName The ENS name as a string (e.g., "example.eth").
     /// @param contractAddress The address that is expected to be associated with the ENS name.
     /// @param caller The address of the caller (msg.sender).
-    /// @return isValid A boolean indicating whether the ENS name is valid and owned by the caller.
     function verifyENS(
         address ensRegistry,
         string memory ensName,
         address contractAddress,
         address caller
-    ) internal view returns (bool) {
+    ) internal view {
         // Compute the node (namehash) from the ENS name
         bytes32 node = namehash(ensName);
 
         // Step 1: Verify that the caller is the owner of the ENS name
         address ensNameOwner = IENSRegistry(ensRegistry).owner(node);
-        if (caller != ensNameOwner) {
-            return false;
-        }
+        require(
+            caller == ensNameOwner,
+            "Caller is not the owner of the ENS name"
+        );
 
         // Step 2: Verify that the ENS name resolves to the contract's address
         address resolverAddress = IENSRegistry(ensRegistry).resolver(node);
-        if (resolverAddress == address(0)) {
-            return false;
-        }
+        require(resolverAddress != address(0), "Resolver not set for ENS name");
 
         address resolvedAddress = IENSResolver(resolverAddress).addr(node);
-        if (resolvedAddress != contractAddress) {
-            return false;
-        }
-
-        return true;
+        require(
+            resolvedAddress == contractAddress,
+            "ENS name does not resolve to the contract address"
+        );
     }
 
     /// @notice Converts an ENS name to its corresponding ENS node (namehash).

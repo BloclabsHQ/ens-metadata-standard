@@ -41,6 +41,7 @@ library MetadataLib {
         metadata.title = _title;
         metadata.description = _description;
         metadata.ENS_name = _ENS_name;
+        metadata.verification = false;
     }
 
     function getMetadata(

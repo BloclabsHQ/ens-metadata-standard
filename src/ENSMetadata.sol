@@ -79,14 +79,12 @@ contract ENSMetadata {
         );
 
         // Call the verification function in the library
-        bool verified = ENSVerificationLib.verifyENS(
+        ENSVerificationLib.verifyENS(
             ensRegistry,
             metadata.ENS_name,
             address(this),
             msg.sender
         );
-
-        require(verified, "ENS verification failed");
 
         // If verification passes, set verification status to true
         isVerified = true;
