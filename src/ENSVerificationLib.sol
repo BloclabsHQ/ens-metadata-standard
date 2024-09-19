@@ -13,6 +13,12 @@ Key Features:
 - Abstracts the ENS verification logic from the main contract (ENSMetadata.sol), making the code more modular and easier to maintain.
 */
 
+interface IENSRegistry {
+    function owner(bytes32 node) external view returns (address);
+
+    function resolver(bytes32 node) external view returns (address);
+}
+
 interface IENSResolver {
     function addr(bytes32 node) external view returns (address);
 }
@@ -21,39 +27,80 @@ interface IENSResolver {
 /// @notice Provides functions to verify ENS names and their associated addresses.
 /// @dev This library relies on the ENS registry to fetch the resolver and verify addresses.
 library ENSVerificationLib {
-    /// @notice Verifies that the ENS name resolves to the expected contract address.
+    /// @notice Verifies that the ENS name is owned by the caller and resolves to the expected contract address.
     /// @param ensRegistry The address of the ENS registry contract.
-    /// @param node The ENS node (namehash) associated with the ENS name.
+    /// @param ensName The ENS name as a string (e.g., "example.eth").
     /// @param contractAddress The address that is expected to be associated with the ENS name.
-    /// @return isValid A boolean indicating whether the ENS name resolves to the expected address.
+    /// @param caller The address of the caller (msg.sender).
     function verifyENS(
         address ensRegistry,
-        bytes32 node,
-        address contractAddress
-    ) internal view returns (bool) {
-        // Get the ENS contract instance
-        ENS ens = ENS(ensRegistry);
+        string memory ensName,
+        address contractAddress,
+        address caller
+    ) internal view {
+        // Compute the node (namehash) from the ENS name
+        bytes32 node = namehash(ensName);
 
-        // Get the resolver address for the given node (ENS name)
-        address resolverAddress = ens.resolver(node);
-        // console.log("Resolver Address:", resolverAddress);
+        // Step 1: Verify that the caller is the owner of the ENS name
+        address ensNameOwner = IENSRegistry(ensRegistry).owner(node);
+        require(
+            caller == ensNameOwner,
+            "Caller is not the owner of the ENS name"
+        );
 
-        // Cast the resolver address to the IENSResolver interface
-        IENSResolver resolver = IENSResolver(resolverAddress);
+        // Step 2: Verify that the ENS name resolves to the contract's address
+        address resolverAddress = IENSRegistry(ensRegistry).resolver(node);
+        require(resolverAddress != address(0), "Resolver not set for ENS name");
 
-        // Get the address associated with the ENS name from the resolver
-        address resolvedAddress = resolver.addr(node);
-        // console.log("Resolved Address:", resolvedAddress);
-        // console.log("Expected Contract Address:", contractAddress);
-        // Verify that the resolved address matches the expected contract address
-        return resolvedAddress == contractAddress;
+        address resolvedAddress = IENSResolver(resolverAddress).addr(node);
+        require(
+            resolvedAddress == contractAddress,
+            "ENS name does not resolve to the contract address"
+        );
     }
 
     /// @notice Converts an ENS name to its corresponding ENS node (namehash).
-    /// @param ensName The ENS name as a string (e.g., "example.eth").
+    /// @param name The ENS name as a string (e.g., "example.eth").
     /// @return node The ENS node (namehash) derived from the ENS name.
-    function getENSNode(string memory ensName) internal pure returns (bytes32) {
-        // Convert the ENS name to a bytes32 hash
-        return keccak256(abi.encodePacked(ensName));
+    function namehash(string memory name) internal pure returns (bytes32) {
+        bytes32 node = 0x0;
+        if (bytes(name).length == 0) {
+            return node;
+        }
+        bytes memory labels = bytes(name);
+        uint256 i = labels.length;
+        while (i > 0) {
+            uint256 j = i;
+            while (j > 0 && labels[j - 1] != ".") {
+                j--;
+            }
+            bytes32 label = keccak256(
+                abi.encodePacked(slice(labels, j, i - j))
+            );
+            node = keccak256(abi.encodePacked(node, label));
+            if (j > 0) {
+                i = j - 1;
+            } else {
+                break;
+            }
+        }
+        return node;
+    }
+
+    /// @notice Slices a byte array.
+    /// @param data The byte array to slice.
+    /// @param start The starting index.
+    /// @param length The length of the slice.
+    /// @return result The sliced byte array.
+    function slice(
+        bytes memory data,
+        uint256 start,
+        uint256 length
+    ) internal pure returns (bytes memory) {
+        bytes memory result = new bytes(length);
+        for (uint256 k = 0; k < length; k++) {
+            result[k] = data[start + k];
+        }
+        return result;
     }
 }

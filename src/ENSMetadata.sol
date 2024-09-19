@@ -8,22 +8,22 @@ import {ENSVerificationLib} from "./ENSVerificationLib.sol";
 Purpose: This is the main contract that manages the ENS metadata for smart contracts.
 It uses the MetadataLib and ENSVerificationLib to handle the logic for managing ENS metadata.
 */
-
-// TODO: replace string with bytes32?
-
 interface IENSRegistry {
     function owner(bytes32 node) external view returns (address);
+
+    function resolver(bytes32 node) external view returns (address);
 }
+// TODO: replace string with bytes32?
+
 /// @title ENS Metadata Contract
 /// @notice Manages metadata for a contract and verifies its associated ENS name.
 /// @dev Uses the ENSVerificationLib library to verify the ENS name.
 contract ENSMetadata {
     using MetadataLib for MetadataLib.Metadata;
-    using ENSVerificationLib for address;
 
     MetadataLib.Metadata public metadata;
     address public owner;
-    IENSRegistry public ensRegistry;
+    address public ensRegistry;
     bool public isVerified = false;
 
     event MetadataUpdated(
@@ -36,11 +36,13 @@ contract ENSMetadata {
     constructor(
         string memory _title,
         string memory _description,
-        string memory _ENS_name
+        string memory _ENS_name,
+        address _ensRegistry
     ) {
         // Update the metadata with the new values
         metadata.setMetadata(_title, _description, _ENS_name);
         owner = msg.sender; // Set the contract deployer as the owner
+        ensRegistry = _ensRegistry; // Set the ENS registry address based on the blockchain and environment
     }
 
     modifier onlyOwner() {
@@ -57,6 +59,10 @@ contract ENSMetadata {
         // Update the metadata with the new values
         metadata.setMetadata(_title, _description, _ENS_name);
 
+        // Reset verification status, requires re-verification
+        isVerified = false;
+        metadata.verification = false;
+
         // Emit the event with the new metadata
         emit MetadataUpdated(
             _title,
@@ -66,35 +72,33 @@ contract ENSMetadata {
         );
     }
 
-    function verifyENS() public onlyOwner returns (bool) {
-        // Ensure that the ENS name is not empty
+    function verifyENS() public returns (bool) {
         require(
             bytes(metadata.ENS_name).length > 0,
             "ENS name cannot be empty"
         );
 
-        // Convert the ENS name to its corresponding ENS node (namehash)
-        bytes32 node = ENSVerificationLib.getENSNode(metadata.ENS_name);
+        // Call the verification function in the library
+        ENSVerificationLib.verifyENS(
+            ensRegistry,
+            metadata.ENS_name,
+            address(this),
+            msg.sender
+        );
 
-        // Perform the ENS verification by checking if address(this) is the owner of the ENS name
-        address ownerOfENS = ensRegistry.owner(node);
+        // If verification passes, set verification status to true
+        isVerified = true;
+        metadata.verification = true;
 
-        // Check that the owner of the ENS name is the current contract
-        bool verified = ownerOfENS == msg.sender;
-
-        // Set the metadata verification status to true if verified
-        isVerified = verified;
-        metadata.verification = verified;
-
-        // Emit the event with the new metadata
+        // Emit the event with the updated metadata
         emit MetadataUpdated(
             metadata.title,
             metadata.description,
             metadata.ENS_name,
-            metadata.verification // Emit the event with the new verification status
+            metadata.verification
         );
 
-        return verified;
+        return true;
     }
 
     function getMetadata()
