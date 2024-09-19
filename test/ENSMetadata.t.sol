@@ -11,101 +11,119 @@ contract ENSMetadataTest is Test {
     ENSMetadata ensMetadata;
     MockENSRegistry mockENSRegistry;
     MockENSResolver mockENSResolver;
-    bytes32 ensNode;
+    address contractOwner;
+    address ensOwner;
+    address otherAccount;
 
     function setUp() public {
+        contractOwner = address(this); // The address running the test
+        ensOwner = address(0x1234); // Simulated ENS name owner
+        otherAccount = address(0x5678);
         // Deploy the mock ENS registry and resolver
         mockENSRegistry = new MockENSRegistry();
         mockENSResolver = new MockENSResolver();
 
-        // Calculate the ENS node (namehash) for "ensname.eth"
-        ensNode = keccak256(abi.encodePacked("ensname.eth"));
-
-        // Set the resolver for the ENS name in the registry
-        mockENSRegistry.setResolver(ensNode, address(mockENSResolver));
-
-        // Set the address associated with the ENS name in the resolver
-        mockENSResolver.setAddr(ensNode, address(ensMetadata)); // Example: pointing to the test contract's address
-
         // Deploy the ENSMetadata contract with the mock ENS registry
         ensMetadata = new ENSMetadata(
-            "Initial Title",
-            "Initial Description",
-            "ensname.eth"
+            "Test Title",
+            "Test Description",
+            "example.eth",
+            address(mockENSRegistry)
         );
     }
 
-    function testInitialMetadata() public view {
-        (
-            string memory title,
-            string memory description,
-            string memory ENS_name,
-            bool verification
-        ) = ensMetadata.getMetadata();
+    function testVerifyENSCallerNotOwner() public {
+        string memory ensName = "example.eth";
+        bytes32 node = ENSVerificationLib.namehash(ensName);
 
-        assertEq(title, "Initial Title");
-        assertEq(description, "Initial Description");
-        assertEq(ENS_name, "ensname.eth");
-        assertEq(verification, false); // Assuming verification is false initially
+        // Set ownership of the ENS name to ensOwner
+        mockENSRegistry.setOwner(node, ensOwner);
+
+        // Set resolver for the ENS name
+        mockENSRegistry.setResolver(node, address(mockENSResolver));
+
+        // Set the address record to point to the contract's address
+        mockENSResolver.setAddr(node, address(ensMetadata));
+
+        // Simulate the call from otherAccount
+        vm.prank(otherAccount);
+
+        // Attempt to call verifyENS and expect it to revert
+        vm.expectRevert("Caller is not the owner of the ENS name");
+        ensMetadata.verifyENS();
     }
 
-    function testSetMetadata() public {
-        // Set up the ENS resolver to resolve "newname.eth" to the ENSMetadata contract's address
-        bytes32 newEnsNode = keccak256(abi.encodePacked("newname.eth"));
-        mockENSRegistry.setResolver(newEnsNode, address(mockENSResolver));
-        mockENSResolver.setAddr(newEnsNode, address(ensMetadata)); // Pointing to the ENSMetadata contract's address
+    function testVerifyENSWrongResolvedAddress() public {
+        string memory ensName = "example.eth";
+        bytes32 node = ENSVerificationLib.namehash(ensName);
 
-        // Call the setMetadata function and expect it to succeed
-        ensMetadata.setMetadata("New Title", "New Description", "newname.eth");
+        // Set ownership of the ENS name to ensOwner
+        mockENSRegistry.setOwner(node, ensOwner);
 
-        // Verify the metadata was set correctly
-        (
-            string memory title,
-            string memory description,
-            string memory ENS_name,
-            bool verification
-        ) = ensMetadata.getMetadata();
+        // Set resolver for the ENS name
+        mockENSRegistry.setResolver(node, address(mockENSResolver));
 
-        assertEq(title, "New Title");
-        assertEq(description, "New Description");
-        assertEq(ENS_name, "newname.eth");
-        assertFalse(verification, "ENS name should not be verified yet");
+        // Set the address record to point to a different address
+        mockENSResolver.setAddr(node, otherAccount);
+
+        // Simulate the call from ensOwner
+        vm.prank(ensOwner);
+
+        // Expect the function to revert with the specific error message
+        vm.expectRevert("ENS name does not resolve to the contract address");
+        ensMetadata.verifyENS();
     }
 
-    function testNonOwnerCannotSetMetadata() public {
-        vm.prank(address(0x1234)); // Simulate a different caller
-        vm.expectRevert("Only the owner can modify the metadata");
-        ensMetadata.setMetadata(
-            "Unauthorized Title",
-            "Unauthorized Description",
-            "unauthorized.eth"
-        );
+    function testVerifyENSSuccess() public {
+        string memory ensName = "example.eth";
+        bytes32 node = ENSVerificationLib.namehash(ensName);
+
+        // Set ownership of the ENS name to ensOwner
+        mockENSRegistry.setOwner(node, ensOwner);
+
+        // Set resolver for the ENS name
+        mockENSRegistry.setResolver(node, address(mockENSResolver));
+
+        // Set the address record to point to the contract's address
+        mockENSResolver.setAddr(node, address(ensMetadata));
+
+        // Simulate the call from ensOwner
+        vm.prank(ensOwner);
+
+        // Call verifyENS
+        bool success = ensMetadata.verifyENS();
+        assertTrue(success);
+
+        // Check that verification status is true
+        bool isVerified = ensMetadata.isVerified();
+        assertTrue(isVerified);
     }
 
-    function testVerifyENSName() public {
-        // Set up the ENS resolver to resolve "ensname.eth" to the contract address
-        mockENSResolver.setAddr(ensNode, address(ensMetadata));
+    // ============================
+    function testVerifyENSEmptyName() public {
+        // Set the ENS name to an empty string
+        vm.prank(contractOwner);
+        ensMetadata.setMetadata("Test Title", "Test Description", "");
 
-        // Call a method to verify the ENS name
-        bytes32 node = keccak256(abi.encodePacked("ensname.eth"));
-        bool isVerified = ENSVerificationLib.verifyENS(
-            address(mockENSRegistry),
-            node,
-            address(ensMetadata)
-        );
-
-        assertTrue(isVerified, "ENS name should be verified correctly");
+        // Attempt to call verifyENS and expect it to revert
+        vm.expectRevert("ENS name cannot be empty");
+        ensMetadata.verifyENS();
     }
+    // Purpose: Checks that verifyENS() reverts when the resolver is not set for the ENS name.
+    function testVerifyENSResolverNotSet() public {
+        string memory ensName = "example.eth";
+        bytes32 node = ENSVerificationLib.namehash(ensName);
 
-    function testVerifyENS() public {
-        // Set the resolver for the ENS node
-        mockENSRegistry.setResolver(ensNode, address(mockENSResolver));
+        // Set ownership of the ENS name to ensOwner
+        mockENSRegistry.setOwner(node, ensOwner);
 
-        // Set the owner for the ENS node
-        mockENSRegistry.setOwner(ensNode, address(this));
+        // Do not set the resolver for the ENS name
 
-        // Ensure the owner is correct when calling ensRegistry.owner(ensNode)
-        address owner = mockENSRegistry.owner(ensNode);
-        assertEq(owner, address(this)); // Test that the owner is correctly set
+        // Simulate the call from ensOwner
+        vm.prank(ensOwner);
+
+        // Expect the function to revert with the specific error message
+        vm.expectRevert("Resolver not set for ENS name");
+        ensMetadata.verifyENS();
     }
 }
