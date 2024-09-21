@@ -32,31 +32,23 @@ library ENSVerificationLib {
     /// @param ensName The ENS name as a string (e.g., "example.eth").
     /// @param contractAddress The address that is expected to be associated with the ENS name.
     /// @param caller The address of the caller (msg.sender).
-    function verifyENS(
-        address ensRegistry,
-        string memory ensName,
-        address contractAddress,
-        address caller
-    ) internal view {
+    function verifyENS(address ensRegistry, string memory ensName, address contractAddress, address caller)
+        internal
+        view
+    {
         // Compute the node (namehash) from the ENS name
         bytes32 node = namehash(ensName);
 
         // Step 1: Verify that the caller is the owner of the ENS name
         address ensNameOwner = IENSRegistry(ensRegistry).owner(node);
-        require(
-            caller == ensNameOwner,
-            "Caller is not the owner of the ENS name"
-        );
+        require(caller == ensNameOwner, "Caller is not the owner of the ENS name");
 
         // Step 2: Verify that the ENS name resolves to the contract's address
         address resolverAddress = IENSRegistry(ensRegistry).resolver(node);
         require(resolverAddress != address(0), "Resolver not set for ENS name");
 
         address resolvedAddress = IENSResolver(resolverAddress).addr(node);
-        require(
-            resolvedAddress == contractAddress,
-            "ENS name does not resolve to the contract address"
-        );
+        require(resolvedAddress == contractAddress, "ENS name does not resolve to the contract address");
     }
 
     /// @notice Converts an ENS name to its corresponding ENS node (namehash).
@@ -74,9 +66,7 @@ library ENSVerificationLib {
             while (j > 0 && labels[j - 1] != ".") {
                 j--;
             }
-            bytes32 label = keccak256(
-                abi.encodePacked(slice(labels, j, i - j))
-            );
+            bytes32 label = keccak256(abi.encodePacked(slice(labels, j, i - j)));
             node = keccak256(abi.encodePacked(node, label));
             if (j > 0) {
                 i = j - 1;
@@ -92,11 +82,7 @@ library ENSVerificationLib {
     /// @param start The starting index.
     /// @param length The length of the slice.
     /// @return result The sliced byte array.
-    function slice(
-        bytes memory data,
-        uint256 start,
-        uint256 length
-    ) internal pure returns (bytes memory) {
+    function slice(bytes memory data, uint256 start, uint256 length) internal pure returns (bytes memory) {
         bytes memory result = new bytes(length);
         for (uint256 k = 0; k < length; k++) {
             result[k] = data[start + k];

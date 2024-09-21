@@ -44,18 +44,11 @@ library MetadataLib {
         metadata.verification = false;
     }
 
-    function getMetadata(
-        Metadata storage metadata
-    )
+    function getMetadata(Metadata storage metadata)
         internal
         view
         returns (string memory, string memory, string memory, bool)
     {
-        return (
-            metadata.title,
-            metadata.description,
-            metadata.ENS_name,
-            metadata.verification
-        );
+        return (metadata.title, metadata.description, metadata.ENS_name, metadata.verification);
     }
 }

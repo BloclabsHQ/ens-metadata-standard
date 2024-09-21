@@ -26,19 +26,9 @@ contract ENSMetadata {
     address public ensRegistry;
     bool public isVerified = false;
 
-    event MetadataUpdated(
-        string title,
-        string description,
-        string ENS_name,
-        bool verification
-    );
+    event MetadataUpdated(string title, string description, string ENS_name, bool verification);
 
-    constructor(
-        string memory _title,
-        string memory _description,
-        string memory _ENS_name,
-        address _ensRegistry
-    ) {
+    constructor(string memory _title, string memory _description, string memory _ENS_name, address _ensRegistry) {
         // Update the metadata with the new values
         metadata.setMetadata(_title, _description, _ENS_name);
         owner = msg.sender; // Set the contract deployer as the owner
@@ -51,11 +41,7 @@ contract ENSMetadata {
         _;
     }
 
-    function setMetadata(
-        string memory _title,
-        string memory _description,
-        string memory _ENS_name
-    ) public onlyOwner {
+    function setMetadata(string memory _title, string memory _description, string memory _ENS_name) public onlyOwner {
         // Update the metadata with the new values
         metadata.setMetadata(_title, _description, _ENS_name);
 
@@ -73,30 +59,17 @@ contract ENSMetadata {
     }
 
     function verifyENS() public returns (bool) {
-        require(
-            bytes(metadata.ENS_name).length > 0,
-            "ENS name cannot be empty"
-        );
+        require(bytes(metadata.ENS_name).length > 0, "ENS name cannot be empty");
 
         // Call the verification function in the library
-        ENSVerificationLib.verifyENS(
-            ensRegistry,
-            metadata.ENS_name,
-            address(this),
-            msg.sender
-        );
+        ENSVerificationLib.verifyENS(ensRegistry, metadata.ENS_name, address(this), msg.sender);
 
         // If verification passes, set verification status to true
         isVerified = true;
         metadata.verification = true;
 
         // Emit the event with the updated metadata
-        emit MetadataUpdated(
-            metadata.title,
-            metadata.description,
-            metadata.ENS_name,
-            metadata.verification
-        );
+        emit MetadataUpdated(metadata.title, metadata.description, metadata.ENS_name, metadata.verification);
 
         return true;
     }
@@ -104,12 +77,7 @@ contract ENSMetadata {
     function getMetadata()
         public
         view
-        returns (
-            string memory title,
-            string memory description,
-            string memory ENS_name,
-            bool verification
-        )
+        returns (string memory title, string memory description, string memory ENS_name, bool verification)
     {
         // Return the metadata
         return metadata.getMetadata();
