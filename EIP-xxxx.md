@@ -1,7 +1,7 @@
 ---
 title: Metadata and ENS Verification for Searchable Contracts
 description: A standard for adding verifiable metadata to smart contracts, enabling enhanced searchability and trust through ENS-based verification.
-author: Cristian Romero <cristian@madgeniusblink.com>,
+author: Cristian Romero <cristian@madgeniusblink.com>, Md Moksedul Hoque (@uzzolsse) <uzzol.sse@gmail.com>,
 discussions-to: 
 status: Draft
 type: Standards Track
