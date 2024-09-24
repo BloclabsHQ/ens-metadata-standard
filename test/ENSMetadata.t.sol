@@ -32,7 +32,7 @@ contract ENSMetadataTest is Test {
         );
     }
 
-    function testVerifyENSCallerNotOwner() public {
+    function test_RevertIf_NotOwner() public {
         string memory ensName = "example.eth";
         bytes32 node = ENSVerificationLib.namehash(ensName);
 
@@ -45,15 +45,14 @@ contract ENSMetadataTest is Test {
         // Set the address record to point to the contract's address
         mockENSResolver.setAddr(node, address(ensMetadata));
 
-        // Simulate the call from otherAccount
-        vm.prank(otherAccount);
-
         // Attempt to call verifyENS and expect it to revert
         vm.expectRevert("Caller is not the owner of the ENS name");
+        // Simulate the call from otherAccount
+        vm.prank(otherAccount);
         ensMetadata.verifyENS();
     }
 
-    function testVerifyENSWrongResolvedAddress() public {
+    function test_RevertWhen_ResolverAddressIsWrong() public {
         string memory ensName = "example.eth";
         bytes32 node = ENSVerificationLib.namehash(ensName);
 
@@ -66,11 +65,10 @@ contract ENSMetadataTest is Test {
         // Set the address record to point to a different address
         mockENSResolver.setAddr(node, otherAccount);
 
-        // Simulate the call from ensOwner
-        vm.prank(ensOwner);
-
         // Expect the function to revert with the specific error message
         vm.expectRevert("ENS name does not resolve to the contract address");
+        // Simulate the call from ensOwner
+        vm.prank(ensOwner);
         ensMetadata.verifyENS();
     }
 
@@ -110,7 +108,9 @@ contract ENSMetadataTest is Test {
         ensMetadata.verifyENS();
     }
     // Purpose: Checks that verifyENS() reverts when the resolver is not set for the ENS name.
-    function testVerifyENSResolverNotSet() public {
+
+    function test_RevertIf_ENSResolverNotSet() public {
+        // testVerifyENSResolverNotSet
         string memory ensName = "example.eth";
         bytes32 node = ENSVerificationLib.namehash(ensName);
 
@@ -118,12 +118,10 @@ contract ENSMetadataTest is Test {
         mockENSRegistry.setOwner(node, ensOwner);
 
         // Do not set the resolver for the ENS name
-
-        // Simulate the call from ensOwner
-        vm.prank(ensOwner);
-
         // Expect the function to revert with the specific error message
         vm.expectRevert("Resolver not set for ENS name");
+        // Simulate the call from ensOwner
+        vm.prank(ensOwner);
         ensMetadata.verifyENS();
     }
 }
