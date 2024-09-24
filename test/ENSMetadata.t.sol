@@ -24,7 +24,12 @@ contract ENSMetadataTest is Test {
         mockENSResolver = new MockENSResolver();
 
         // Deploy the ENSMetadata contract with the mock ENS registry
-        ensMetadata = new ENSMetadata("Test Title", "Test Description", "example.eth", address(mockENSRegistry));
+        ensMetadata = new ENSMetadata(
+            "Test Title",
+            "Test Description",
+            "example.eth",
+            address(mockENSRegistry)
+        );
     }
 
     function test_RevertIf_NotOwner() public {
