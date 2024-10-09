@@ -61,11 +61,6 @@ contract ENSMetadata {
     }
 
     function verifyENS() public returns (bool) {
-        require(
-            bytes(metadata.ENS_name).length > 0,
-            "ENS name cannot be empty"
-        );
-
         // Call the verification function in the library
         ENSVerificationLib.verifyENS(
             ensRegistry,
