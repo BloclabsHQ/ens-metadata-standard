@@ -26,6 +26,13 @@ library MetadataLib {
         bool verification;
     }
 
+    event MetadataUpdated(
+        string title,
+        string description,
+        string ENS_name,
+        bool verification
+    );
+
     /// @notice Sets the metadata for a contract.
     /// @dev Updates the Metadata struct with a new title, description, and ENS name. The verification status is not modified by this function.
     /// @param metadata The storage pointer to the Metadata struct to be updated.
@@ -41,7 +48,15 @@ library MetadataLib {
         metadata.title = _title;
         metadata.description = _description;
         metadata.ENS_name = _ENS_name;
-        metadata.verification = false;
+        metadata.verification = false; // Automatically reset verification
+
+        // Emit the event with the updated metadata
+        emit MetadataUpdated(
+            metadata.title,
+            metadata.description,
+            metadata.ENS_name,
+            metadata.verification
+        );
     }
 
     function getMetadata(
