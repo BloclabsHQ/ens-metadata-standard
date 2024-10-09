@@ -27,6 +27,8 @@ interface IENSResolver {
 /// @notice Provides functions to verify ENS names and their associated addresses.
 /// @dev This library relies on the ENS registry to fetch the resolver and verify addresses.
 library ENSVerificationLib {
+    event ENSVerified(string ensName, address contractAddress, address caller);
+
     /// @notice Verifies that the ENS name is owned by the caller and resolves to the expected contract address.
     /// @param ensRegistry The address of the ENS registry contract.
     /// @param ensName The ENS name as a string (e.g., "example.eth").
@@ -37,7 +39,7 @@ library ENSVerificationLib {
         string memory ensName,
         address contractAddress,
         address caller
-    ) internal view {
+    ) internal {
         // Compute the node (namehash) from the ENS name
         bytes32 node = namehash(ensName);
 
@@ -57,6 +59,8 @@ library ENSVerificationLib {
             resolvedAddress == contractAddress,
             "ENS name does not resolve to the contract address"
         );
+        // Emit the ENSVerified event upon successful verification
+        emit ENSVerified(ensName, contractAddress, caller);
     }
 
     /// @notice Converts an ENS name to its corresponding ENS node (namehash).
