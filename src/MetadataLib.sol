@@ -26,6 +26,15 @@ library MetadataLib {
         bool verification;
     }
 
+    event ContextProvided(string context);
+
+    /// @notice Modifier to provide context to function calls.
+    /// @param context The context string to be emitted.
+    modifier withContext(string memory context) {
+        emit ContextProvided(context);
+        _;
+    }
+
     /// @notice Sets the metadata for a contract.
     /// @dev Updates the Metadata struct with a new title, description, and ENS name. The verification status is not modified by this function.
     /// @param metadata The storage pointer to the Metadata struct to be updated.
