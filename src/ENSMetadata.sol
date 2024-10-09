@@ -77,8 +77,6 @@ contract ENSMetadata {
         // If verification passes, set verification status to true
         metadata.verification = true;
 
-        // TODO: emit event from ENSVerificationLib instead of here
-
         return true;
     }
 
