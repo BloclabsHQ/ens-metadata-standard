@@ -39,7 +39,8 @@ library ENSVerificationLib {
         string memory ensName,
         address contractAddress,
         address caller
-    ) internal {
+    ) internal view {
+        require(bytes(ensName).length > 0, "ENS name cannot be empty");
         // Compute the node (namehash) from the ENS name
         bytes32 node = namehash(ensName);
 
