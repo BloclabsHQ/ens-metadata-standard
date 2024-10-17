@@ -24,7 +24,6 @@ contract ENSMetadata {
     MetadataLib.Metadata public metadata;
     address public owner;
     address public ensRegistry;
-    bool public isVerified = false;
 
     event MetadataUpdated(
         string title,
@@ -57,29 +56,13 @@ contract ENSMetadata {
         string memory _ENS_name
     ) public onlyOwner {
         // Update the metadata with the new values
+        // Automatically resets verification
         metadata.setMetadata(_title, _description, _ENS_name);
-
-        // Reset verification status, requires re-verification
-        isVerified = false;
-        metadata.verification = false;
-
-        // Emit the event with the new metadata
-        emit MetadataUpdated(
-            _title,
-            _description,
-            _ENS_name,
-            metadata.verification // Emit the event with the current verification status
-        );
     }
 
-    function verifyENS() public returns (bool) {
-        require(
-            bytes(metadata.ENS_name).length > 0,
-            "ENS name cannot be empty"
-        );
-
+    function verifyENS() external returns (bool) {
         // Call the verification function in the library
-        ENSVerificationLib.verifyENS(
+        bool verification = ENSVerificationLib.verifyENS(
             ensRegistry,
             metadata.ENS_name,
             address(this),
@@ -87,18 +70,9 @@ contract ENSMetadata {
         );
 
         // If verification passes, set verification status to true
-        isVerified = true;
-        metadata.verification = true;
+        metadata.verification = verification;
 
-        // Emit the event with the updated metadata
-        emit MetadataUpdated(
-            metadata.title,
-            metadata.description,
-            metadata.ENS_name,
-            metadata.verification
-        );
-
-        return true;
+        return verification;
     }
 
     function getMetadata()
