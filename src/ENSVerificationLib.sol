@@ -39,7 +39,7 @@ library ENSVerificationLib {
         string memory ensName,
         address contractAddress,
         address caller
-    ) internal {
+    ) internal returns (bool) {
         require(bytes(ensName).length > 0, "ENS name cannot be empty");
         // Compute the node (namehash) from the ENS name
         bytes32 node = namehash(ensName);
@@ -62,6 +62,8 @@ library ENSVerificationLib {
         );
         // Emit the ENSVerified event upon successful verification
         emit ENSVerified(ensName, contractAddress, caller);
+
+        return true;
     }
 
     /// @notice Converts an ENS name to its corresponding ENS node (namehash).

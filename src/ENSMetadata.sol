@@ -62,7 +62,7 @@ contract ENSMetadata {
 
     function verifyENS() external returns (bool) {
         // Call the verification function in the library
-        ENSVerificationLib.verifyENS(
+        bool verification = ENSVerificationLib.verifyENS(
             ensRegistry,
             metadata.ENS_name,
             address(this),
@@ -70,9 +70,9 @@ contract ENSMetadata {
         );
 
         // If verification passes, set verification status to true
-        metadata.verification = true;
+        metadata.verification = verification;
 
-        return true;
+        return verification;
     }
 
     function getMetadata()
