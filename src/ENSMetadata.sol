@@ -60,7 +60,7 @@ contract ENSMetadata {
         metadata.setMetadata(_title, _description, _ENS_name);
     }
 
-    function verifyENS() public returns (bool) {
+    function verifyENS() external returns (bool) {
         // Call the verification function in the library
         ENSVerificationLib.verifyENS(
             ensRegistry,
