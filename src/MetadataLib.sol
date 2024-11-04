@@ -26,6 +26,12 @@ library MetadataLib {
         bool verification;
     }
 
+    event MetadataUpdated(
+        string title,
+        string description,
+        string ENS_name,
+        bool verification
+    );
     event ContextProvided(string context);
 
     /// @notice Modifier to provide context to function calls.
@@ -50,7 +56,15 @@ library MetadataLib {
         metadata.title = _title;
         metadata.description = _description;
         metadata.ENS_name = _ENS_name;
-        metadata.verification = false;
+        metadata.verification = false; // Automatically reset verification
+
+        // Emit the event with the updated metadata
+        emit MetadataUpdated(
+            metadata.title,
+            metadata.description,
+            metadata.ENS_name,
+            metadata.verification
+        );
     }
 
     function getMetadata(

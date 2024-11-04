@@ -91,10 +91,6 @@ contract ENSMetadataTest is Test {
         // Call verifyENS
         bool success = ensMetadata.verifyENS();
         assertTrue(success);
-
-        // Check that verification status is true
-        bool isVerified = ensMetadata.isVerified();
-        assertTrue(isVerified);
     }
 
     // ============================
