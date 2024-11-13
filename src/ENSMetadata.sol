@@ -13,7 +13,7 @@ interface IENSRegistry {
     function resolver(bytes32 node) external view returns (address);
 }
 
-/// @title ENS Metadata Manangement Contract
+/// @title ENS Metadata Management Contract
 /// @notice Manages metadata for a contract and verifies its associated ENS name.
 /// @dev Designed as a standard for associating ENS names with smart contract metadata.
 /// @author Bloclabs LLC
