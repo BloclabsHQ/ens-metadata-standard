@@ -13,6 +13,7 @@ contract DeployScript is Script {
     string constant TITLE = "ENS Metadata Standard";
     string constant DESCRIPTION = "A standard for associating metadata with ENS names";
     string constant ENS_NAME = "ens-metadata.eth";
+    string constant EXTERNAL_DATA_URI = ""; // Empty initially, can be set later
     
     // BSC Testnet ENS Registry address
     // Note: For BNB Chain testnet, we're using a placeholder address
@@ -23,12 +24,17 @@ contract DeployScript is Script {
         // Start broadcasting transactions
         vm.startBroadcast();
 
+        // Create empty array for social media links (can be updated later)
+        string[] memory socialMediaLinks = new string[](0);
+
         // Deploy the ENSMetadata contract
         ENSMetadata ensMetadata = new ENSMetadata(
             TITLE,
             DESCRIPTION,
             ENS_NAME,
-            ENS_REGISTRY
+            ENS_REGISTRY,
+            socialMediaLinks,
+            EXTERNAL_DATA_URI
         );
 
         // Log deployment information
@@ -37,6 +43,8 @@ contract DeployScript is Script {
         console.log("Description:", DESCRIPTION);
         console.log("ENS Name:", ENS_NAME);
         console.log("ENS Registry:", ENS_REGISTRY);
+        console.log("External Data URI:", EXTERNAL_DATA_URI);
+        console.log("Social Media Links: []"); // Empty initially
 
         // Stop broadcasting transactions
         vm.stopBroadcast();
