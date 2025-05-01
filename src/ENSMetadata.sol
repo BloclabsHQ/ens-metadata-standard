@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.25;
 
 import {MetadataLib} from "./MetadataLib.sol";
 import {ENSVerificationLib} from "./ENSVerificationLib.sol";
@@ -23,11 +23,34 @@ contract ENSMetadata {
     MetadataLib.Metadata public metadata;
     address public ensRegistry;
 
-    event MetadataUpdated(string title, string description, string ENS_name, bool verification);
+    event MetadataUpdated(
+        string title, 
+        string description, 
+        string ENS_name, 
+        bool verification,
+        string[] socialMediaLinks,
+        string externalDataURI,
+        uint256 lastUpdated
+    );
+    event SocialMediaLinksUpdated(string[] socialMediaLinks);
+    event ExternalDataURIUpdated(string externalDataURI);
 
-    constructor(string memory _title, string memory _description, string memory _ENS_name, address _ensRegistry) {
+    constructor(
+        string memory _title, 
+        string memory _description, 
+        string memory _ENS_name, 
+        address _ensRegistry,
+        string[] memory _socialMediaLinks,
+        string memory _externalDataURI
+    ) {
         // Update the metadata with the new values
-        metadata.setMetadata(_title, _description, _ENS_name);
+        metadata.setMetadata(
+            _title, 
+            _description, 
+            _ENS_name, 
+            _socialMediaLinks, 
+            _externalDataURI
+        );
         ensRegistry = _ensRegistry; // Set the ENS registry address based on the blockchain and environment
     }
 
@@ -45,16 +68,75 @@ contract ENSMetadata {
     /// @notice Sets the metadata for the contract with a title, description, and ENS name.
     /// @dev This function updates the metadata and emits an event.
     /// It should only be called by the contract owner.
-    function setMetadata(string memory _title, string memory _description, string memory _ENS_name) public {
-        metadata.setMetadata(_title, _description, _ENS_name);
+    function setMetadata(
+        string memory _title,
+        string memory _description,
+        string memory _ENS_name,
+        string[] memory _socialMediaLinks,
+        string memory _externalDataURI
+    ) public {
+        metadata.setMetadata(
+            _title,
+            _description,
+            _ENS_name,
+            _socialMediaLinks,
+            _externalDataURI
+        );
+        
+        emit MetadataUpdated(
+            metadata.title,
+            metadata.description,
+            metadata.ENS_name,
+            metadata.verification,
+            metadata.socialMediaLinks,
+            metadata.externalDataURI,
+            metadata.lastUpdated
+        );
+    }
+
+    /// @notice Updates only the social media links.
+    /// @dev Does not affect other metadata fields except lastUpdated.
+    function setSocialMediaLinks(string[] memory _socialMediaLinks) public {
+        metadata.setSocialMediaLinks(_socialMediaLinks);
+        emit SocialMediaLinksUpdated(_socialMediaLinks);
+    }
+
+    /// @notice Updates only the external data URI.
+    /// @dev Does not affect other metadata fields except lastUpdated.
+    function setExternalDataURI(string memory _externalDataURI) public {
+        metadata.setExternalDataURI(_externalDataURI);
+        emit ExternalDataURIUpdated(_externalDataURI);
     }
 
     /// @notice Retrieves the current metadata.
     function getMetadata()
         public
         view
-        returns (string memory title, string memory description, string memory ENS_name, bool verification)
+        returns (
+            string memory title,
+            string memory description,
+            string memory ENS_name,
+            bool verification,
+            string[] memory socialMediaLinks,
+            string memory externalDataURI,
+            uint256 lastUpdated
+        )
     {
         return metadata.getMetadata();
+    }
+
+    /// @notice Retrieves only the social media links.
+    function getSocialMediaLinks() public view returns (string[] memory) {
+        return metadata.getSocialMediaLinks();
+    }
+
+    /// @notice Retrieves only the external data URI.
+    function getExternalDataURI() public view returns (string memory) {
+        return metadata.getExternalDataURI();
+    }
+
+    /// @notice Retrieves the last update timestamp.
+    function getLastUpdated() public view returns (uint256) {
+        return metadata.getLastUpdated();
     }
 }

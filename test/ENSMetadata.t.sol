@@ -23,12 +23,17 @@ contract ENSMetadataTest is Test {
         mockENSRegistry = new MockENSRegistry();
         mockENSResolver = new MockENSResolver();
 
+        // Create empty array for social media links
+        string[] memory socialMediaLinks = new string[](0);
+
         // Deploy the ENSMetadata contract with the mock ENS registry
         ensMetadata = new ENSMetadata(
             "Test Title",
             "Test Description",
             "example.eth",
-            address(mockENSRegistry)
+            address(mockENSRegistry),
+            socialMediaLinks,
+            ""
         );
     }
 
@@ -95,9 +100,12 @@ contract ENSMetadataTest is Test {
 
     // ============================
     function testVerifyENSEmptyName() public {
+        // Create empty array for social media links
+        string[] memory socialMediaLinks = new string[](0);
+        
         // Set the ENS name to an empty string
         vm.prank(contractOwner);
-        ensMetadata.setMetadata("Test Title", "Test Description", "");
+        ensMetadata.setMetadata("Test Title", "Test Description", "", socialMediaLinks, "");
 
         // Attempt to call verifyENS and expect it to revert
         vm.expectRevert("ENS name cannot be empty");
@@ -119,5 +127,65 @@ contract ENSMetadataTest is Test {
         // Simulate the call from ensOwner
         vm.prank(ensOwner);
         ensMetadata.verifyENS();
+    }
+    
+    // Test for setting and retrieving social media links
+    function testSetAndGetSocialMediaLinks() public {
+        // Create array for social media links
+        string[] memory socialMediaLinks = new string[](2);
+        socialMediaLinks[0] = "https://twitter.com/example";
+        socialMediaLinks[1] = "https://github.com/example";
+        
+        vm.prank(contractOwner);
+        ensMetadata.setSocialMediaLinks(socialMediaLinks);
+        
+        string[] memory retrievedLinks = ensMetadata.getSocialMediaLinks();
+        
+        assertEq(retrievedLinks.length, 2);
+        assertEq(retrievedLinks[0], "https://twitter.com/example");
+        assertEq(retrievedLinks[1], "https://github.com/example");
+    }
+    
+    // Test for setting and retrieving external data URI
+    function testSetAndGetExternalDataURI() public {
+        string memory testURI = "https://metadata.example.com/data.json";
+        
+        vm.prank(contractOwner);
+        ensMetadata.setExternalDataURI(testURI);
+        
+        string memory retrievedURI = ensMetadata.getExternalDataURI();
+        
+        assertEq(retrievedURI, testURI);
+    }
+    
+    // Test retrieving all metadata fields
+    function testGetMetadata() public {
+        // Create array for social media links
+        string[] memory socialMediaLinks = new string[](1);
+        socialMediaLinks[0] = "https://example.com/social";
+        
+        string memory externalURI = "https://example.com/metadata.json";
+        
+        vm.prank(contractOwner);
+        ensMetadata.setMetadata("New Title", "New Description", "new.eth", socialMediaLinks, externalURI);
+        
+        (
+            string memory title,
+            string memory description,
+            string memory ensName,
+            bool verification,
+            string[] memory retrievedLinks,
+            string memory retrievedURI,
+            uint256 lastUpdated
+        ) = ensMetadata.getMetadata();
+        
+        assertEq(title, "New Title");
+        assertEq(description, "New Description");
+        assertEq(ensName, "new.eth");
+        assertEq(verification, false);
+        assertEq(retrievedLinks.length, 1);
+        assertEq(retrievedLinks[0], "https://example.com/social");
+        assertEq(retrievedURI, externalURI);
+        assertTrue(lastUpdated > 0);
     }
 }

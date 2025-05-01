@@ -1,11 +1,11 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.25;
 
 import {ENS} from "ens-contracts/contracts/registry/ENS.sol";
 
 /*
 Purpose: This is another Solidity library, but it specifically focuses on ENS (Ethereum Name Service) verification.
-It provides reusable functions that handle the process of verifying that a smart contract’s address matches a registered ENS name.
+It provides reusable functions that handle the process of verifying that a smart contract's address matches a registered ENS name.
 
 Key Features:
 - Functions to verify the ENS name associated with a contract.
