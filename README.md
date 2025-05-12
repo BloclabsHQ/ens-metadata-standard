@@ -12,7 +12,7 @@ As the Ethereum ecosystem grows, the need for standardized methods to associate 
 
 The ENSMetadata contract addresses this gap by providing a standard interface and implementation for:
 
-- Managing contract metadata (title, description, ENS name).
+- Managing contract metadata (title, description, ENS name, social media links, external data URI).
 - Verifying ownership of an ENS name.
 - Ensuring the ENS name resolves to the contract's address.
 - Emitting events for off-chain indexing and discovery.
@@ -21,7 +21,8 @@ By adopting this standard, developers can enhance the usability and trustworthin
 
 ### Features
 
-- Metadata Management: Set and update the contract's title, description, and associated ENS name.
+- Metadata Management: Set and update the contract's title, description, associated ENS name, social media links, and external data URI.
+- Selective Updates: Update only social media links or external data URI without changing other metadata.
 - ENS Verification: Verify that the ENS name is owned by the caller and resolves to the contract's address.
 - Event Emission: Emit events when metadata is updated or verified, enabling off-chain indexing.
 - Modular Design: Utilize libraries for metadata handling and ENS verification to promote code reuse and maintainability.
@@ -29,6 +30,8 @@ By adopting this standard, developers can enhance the usability and trustworthin
 ## Documentation
 
 - [Detailed Documentation](docs/DOCUMENTATION.md): In-depth information about the contract's architecture and libraries.
+- [ENS Metadata Standard](docs/ENS-METADATA-STANDARD.md): Comprehensive guide to implementing and using the standard.
+- [Foundry Documentation](docs/FoundryDocumentation.md): Information about using Foundry with this project.
 - [EIP Proposal (Draft)](./EIP-xxxx.md): The Ethereum Improvement Proposal for standardizing ENS metadata management.
 
 ## Installation
@@ -47,18 +50,46 @@ ENSMetadata ensMetadata = new ENSMetadata(
     "My Contract",
     "An example contract with ENS integration",
     "mycontract.eth",
-    ensRegistryAddress
+    ensRegistryAddress,
+    new string[](0), // No social media links initially
+    "" // No external data URI initially
 );
 
-// Setting metadata (only owner can do this)
+// Setting all metadata
+string[] memory socialLinks = new string[](2);
+socialLinks[0] = "https://twitter.com/mycontract";
+socialLinks[1] = "https://github.com/myorg/myproject";
+
 ensMetadata.setMetadata(
     "Updated Title",
     "Updated Description",
-    "updatedname.eth"
+    "updatedname.eth",
+    socialLinks,
+    "ipfs://QmXyz..."
 );
 
+// Updating only social media links
+string[] memory newLinks = new string[](2);
+newLinks[0] = "https://twitter.com/newhandle";
+newLinks[1] = "https://discord.gg/newserver";
+ensMetadata.setSocialMediaLinks(newLinks);
+
+// Updating only external data URI
+ensMetadata.setExternalDataURI("ipfs://QmNew...");
+
 // Verifying ENS association (ENS name owner should call this)
-ensMetadata.verifyENS();
+bool verified = ensMetadata.verifyENS();
+
+// Retrieving metadata
+(
+    string memory title,
+    string memory description,
+    string memory ensName,
+    bool verification,
+    string[] memory socialMediaLinks,
+    string memory externalDataURI,
+    uint256 lastUpdated
+) = ensMetadata.getMetadata();
 ```
 
 ## License
